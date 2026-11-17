@@ -3,9 +3,10 @@
 *.tfstate.*
 *.tfvars
 !terraform.tfvars.example
-.terraform.lock.hcl
 *.pem
 *.key
 .env
 .env.*
 .DS_Store
+*-backup.yaml
+*-patch.json

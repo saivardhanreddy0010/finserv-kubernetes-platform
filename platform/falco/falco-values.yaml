@@ -1,0 +1,11 @@
+driver:
+  enabled: true
+  kind: modern_ebpf
+  modernEbpf:
+    leastPrivileged: true
+    sysfsMount: true
+
+collectors:
+  enabled: true
+  containerEngine:
+    enabled: true

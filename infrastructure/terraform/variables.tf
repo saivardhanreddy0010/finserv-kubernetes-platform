@@ -21,3 +21,8 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.40.0.0/16"
 }
+
+variable "public_access_cidrs" {
+  description = "Public IPv4 CIDR ranges allowed to access the EKS Kubernetes API."
+  type        = list(string)
+}
