@@ -26,10 +26,8 @@ prometheus-node-exporter:
 
 server:
   retention: "6h"
-
   persistentVolume:
     enabled: false
-
   resources:
     requests:
       cpu: 100m
@@ -37,3 +35,35 @@ server:
     limits:
       cpu: 300m
       memory: 384Mi
+
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: finserv-platform-alerts
+        rules:
+          - alert: HighNodeCPUUsage
+            expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: High node CPU usage
+              description: Node CPU usage has exceeded 85% for 5 minutes.
+
+          - alert: HighNodeMemoryUsage
+            expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: High node memory usage
+              description: Node memory usage has exceeded 85% for 5 minutes.
+
+          - alert: ExcessivePodRestarts
+            expr: increase(kube_pod_container_status_restarts_total[10m]) > 2
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: Excessive pod restarts
+              description: A container has restarted more than twice in 10 minutes.
