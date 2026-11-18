@@ -1,4 +1,4 @@
-name: FinServ Customer API CI
+name: FinServ Customer API CI/CD
 
 on:
   push:
@@ -8,9 +8,18 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: finserv-customer-api
+  ECR_REGISTRY: 268833227305.dkr.ecr.ap-south-1.amazonaws.com
+
 jobs:
-  build:
-    name: Build and Scan Customer API
+  build-and-scan:
+    name: Build, Scan and Push Customer API
     runs-on: ubuntu-latest
 
     steps:
@@ -20,16 +29,32 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build \
-            -t finserv-customer-api:latest \
+            -t finserv-customer-api:${{ github.sha }} \
             ./apps/customer-api
 
       - name: Scan Docker Image with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: finserv-customer-api:latest
+          image-ref: finserv-customer-api:${{ github.sha }}
           format: table
           severity: HIGH,CRITICAL
           exit-code: '0'
 
-      - name: Display Docker Image
-        run: docker images finserv-customer-api
+      - name: Configure AWS Credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::268833227305:role/finserv-github-actions-ecr-role
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push Image to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag finserv-customer-api:${{ github.sha }} \
+            $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
