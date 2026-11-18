@@ -19,7 +19,7 @@ env:
 
 jobs:
   build-and-scan:
-    name: Build, Scan and Push Customer API
+    name: Build, Scan, Push and Sign Customer API
     runs-on: ubuntu-latest
 
     steps:
@@ -82,3 +82,20 @@ jobs:
           echo "Signing image: $IMAGE_URI"
 
           cosign sign --yes "$IMAGE_URI"
+
+      - name: Verify Image Signature
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          IMAGE_DIGEST=$(aws ecr describe-images \
+            --repository-name "$ECR_REPOSITORY" \
+            --image-ids imageTag="${GITHUB_SHA}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text)
+
+          IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY@$IMAGE_DIGEST"
+
+          echo "Verifying image: $IMAGE_URI"
+
+          cosign verify "$IMAGE_URI" \
+            --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/ci-cd.yaml@refs/heads/main" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
