@@ -10,11 +10,12 @@
       "Resource": "*"
     },
     {
-      "Sid": "PushCustomerAPIImage",
+      "Sid": "PushAndVerifyCustomerAPIImage",
       "Effect": "Allow",
       "Action": [
         "ecr:BatchCheckLayerAvailability",
         "ecr:BatchGetImage",
+        "ecr:DescribeImages",
         "ecr:InitiateLayerUpload",
         "ecr:UploadLayerPart",
         "ecr:CompleteLayerUpload",
